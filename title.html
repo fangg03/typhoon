@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>氣象海安助手</title>
+  <style>
+    body{
+      margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial;
+      background: url('skymove.gif') no-repeat center center fixed;
+      background-size: cover;   /* 讓背景滿版 */
+      color:#fff;
+    }
+    .wrap{
+      text-align:center;
+      background: rgba(0,0,0,0.3); /* 加一層透明黑背景，讓字比較清楚 */
+      padding:40px;
+      border-radius:20px;
+    }
+    h1{
+      margin-bottom:30px;
+      font-size: 56px;     /* 標題變大 */
+      font-weight: 800;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.5); /* 陰影增加可讀性 */
+    }
+    .btn{
+      display:inline-block; padding:20px 36px; margin:12px;
+      border-radius:14px; background:#fff; color:#2a5298;
+      text-decoration:none; font-size:22px; font-weight:700; /* 按鈕字體變大 */
+      box-shadow:0 8px 20px rgba(0,0,0,.35);
+      transition:transform .15s, background .3s;
+    }
+    .btn:hover{
+      transform:translateY(-4px);
+      background:#f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>氣象海安助手</h1>
+    <a class="btn" href="http.html">🌤️ 即時天氣</a>
+    <a class="btn" href="window.html">🌀 颱風與旅遊安全</a>
+  </div>
+</body>
+</html>

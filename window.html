@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>旅遊安全推薦 - 首頁</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #508c9a;
+            color: #f0f0f0;
+        }
+
+        .sidebar {
+            width: 220px;
+            background-color: #121826;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            color: white;
+            position: fixed;
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out forwards;
+        }
+
+        .sidebar h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color:#f9e7a4;
+        }
+
+        .sidebar a {
+            display: block;
+            margin-bottom: 15px;
+            color: #cdd9e5;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        .sidebar a:hover {
+            color: #f9e7a4;
+        }
+
+        .news {
+            margin-top: 30px;
+            background-color: #3386b3;
+            border-radius: 5px;
+            padding: 10px;
+            color: #fff;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .main-content {
+            margin-left: 240px;
+            padding: 30px;
+            flex-grow: 1;
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out forwards;
+            animation-delay: 0.5s;
+        }
+
+        h1 {
+            color: #f9e7a4;
+            text-align: center;
+        }
+
+        .intro {
+            max-width: 800px;
+            margin: 20px auto;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .button {
+    display: inline-block;
+    padding: 16px 32px;   /* 原本 10px 20px → 放大 */
+    background-color: #034f59;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;   /* 原本 5px → 更圓 */
+    font-size: 20px;      /* 原本 16px → 放大字體 */
+    font-weight: 600;     /* 加粗字體 */
+    box-shadow: 0 6px 14px rgba(0,0,0,.3); /* 增加陰影效果 */
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.button:hover {
+    background-color: #21867a;
+    transform: translateY(-3px); /* hover 時微微浮起 */
+}
+
+
+        .weather-frame, .typhoon-frame {
+            max-width: 1000px;
+            margin: 40px auto;
+            text-align: center;
+        }
+
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+
+        .typhoon-news {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #2a2a3d;
+            border-radius: 5px;
+        }
+
+        .typhoon-news h3 {
+            color: #f9e7a4;
+            margin-bottom: 10px;
+        }
+
+        .typhoon-news ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .typhoon-news li {
+            margin-bottom: 10px;
+        }
+
+        .typhoon-news a {
+            color: #cdd9e5;
+            text-decoration: none;
+        }
+
+        .typhoon-news a:hover {
+            color: #e9c46a;
+        }
+
+        #map {
+            height: 500px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 側邊欄 -->
+    <div class="sidebar">
+        <h2>颱風相關資源</h2>
+        <a href="https://rdc28.cwa.gov.tw/TDB/public/basic_query/" target="_blank">中央氣象局</a>
+        <a href="https://watch.ncdr.nat.gov.tw/watch_typhoon" target="_blank">各國颱風路徑</a>
+        <a href="https://tw.news.yahoo.com/topic/typhoon/" target="_blank">颱風新聞</a>
+
+        <div class="news">
+            <h3>最新颱風警示</h3>
+            <p>強烈颱風即將侵襲，請即刻做好防範措施！</p>
+        </div>
+    </div>
+
+    <!-- 主內容 -->
+    <div class="main-content">
+        <h1>歡迎來到旅遊安全推薦</h1>
+        <div class="intro">
+            <p>探索世界，安全第一！這裡為您提供最新的旅遊安全建議、交通資訊和實用指南，讓您的旅程無憂無慮。</p>
+        </div>
+        <div style="text-align: center;">
+            <a href="danger.html" class="button">查看安全建議</a>
+
+        </div>
+
+        <div class="weather-frame">
+            <h2>即時氣象資訊</h2>
+            <p>查看中央氣象署的最新天氣數據，幫助您規劃安全的旅遊行程。</p>
+            <a href="https://rdc28.cwa.gov.tw/TDB/" target="_blank" class="button">前往氣象資料庫</a>
+        </div>
+
+        <!-- 新增互動地圖區塊 -->
+        <div class="typhoon-frame">
+            <h2>互動式颱風路徑圖</h2>
+            <p>選擇颱風資料檔案後使用滑桿查看路徑。</p>
+            <label for="fileSelect">選擇颱風檔案：</label>
+            <select id="fileSelect">
+                {% for file in files %}
+                    <option value="{{ file }}">{{ file }}</option>
+                {% endfor %}
+            </select>
+
+            <div id="map"></div>
+            <input type="range" id="slider" min="0" max="0" value="0" style="width: 100%; margin-top: 10px;">
+            <p id="info" style="text-align:center; font-size: 16px; margin-top: 10px;"></p>
+        </div>
+
+        <!-- 最新颱風新聞 -->
+        <div class="typhoon-news">
+            <h3>最新颱風新聞</h3>
+            <ul>
+                <li><a href="https://tw.news.yahoo.com/topic/typhoon/" target="_blank">Yahoo 新聞：颱風最新動態與預測</a></li>
+                <li><a href="https://www.cna.com.tw/tag/typhoon/" target="_blank">中央社：颱風路徑與影響分析</a></li>
+                <li><a href="https://www.storm.mg/tag/颱風" target="_blank">風傳媒：颱風相關報導</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- JS 功能 -->
+    <script>
+        const map = L.map('map').setView([23.5, 121], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker = null;
+        let typhoonData = [];
+
+        const select = document.getElementById('fileSelect');
+        const slider = document.getElementById('slider');
+        const info = document.getElementById('info');
+
+        function loadTyphoon(file) {
+            fetch(`/data/${file}`)
+                .then(res => res.text())
+                .then(text => {
+                    const lines = text.split('\n').filter(l => l.trim() !== '');
+                    typhoonData = lines.slice(1).map(line => {
+                        const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname, report] = line.trim().split(/\s+/);
+                        return {
+                            time: `${date} ${time}`,
+                            lat: parseFloat(lat),
+                            lon: parseFloat(lon),
+                            slp: parseInt(slp),
+                            size1: parseInt(size1 || 50),
+                            vmax1: parseInt(vmax1 || 10),
+                            tyname
+                        };
+                    });
+
+                    slider.max = typhoonData.length - 1;
+                    slider.value = 0;
+                    updateMap(0);
+                });
+        }
+
+        function updateMap(i) {
+            const point = typhoonData[i];
+            const color = `hsl(${Math.max(0, 60 - point.vmax1 * 2)}, 100%, 50%)`;
+
+            if (!marker) {
+                marker = L.circle([point.lat, point.lon], {
+                    radius: point.size1 * 300,
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.6
+                }).addTo(map);
+            } else {
+                marker.setLatLng([point.lat, point.lon]);
+                marker.setRadius(point.size1 * 300);
+                marker.setStyle({ fillColor: color, color: color });
+            }
+
+            info.innerText = `颱風：${point.tyname}｜時間：${point.time}｜位置：${point.lat}, ${point.lon}｜氣壓：${point.slp}｜風速：${point.vmax1} m/s`;
+        }
+
+        slider.addEventListener("input", () => updateMap(slider.value));
+        select.addEventListener("change", () => loadTyphoon(select.value));
+
+        // 頁面載入預設讀第一個
+        window.onload = () => loadTyphoon(select.value);
+    </script>
+      <!-- 返回主頁按鈕 -->
+    <div style="text-align:center; margin-top:20px;">
+      <a href="title.html" style="
+        display:inline-block;
+        padding:12px 24px;
+        background:	#276c75;
+        color:#ffffff;
+        border-radius:10px;
+        text-decoration:none;
+        font-weight:600;
+        box-shadow:0 4px 10px rgba(0,0,0,.3);
+      ">⬅返回主頁</a>
+    </div>
+</body>
+</html>
