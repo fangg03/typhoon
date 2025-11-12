@@ -257,9 +257,11 @@ function setupSelect() {
 // 🌀 從 GitHub raw 讀取檔案內容
 async function loadTyphoon(fileName) {
   const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${folder}/${fileName}`;
+  const proxy = "https://cors.isomorphic-git.org/"; // ✅ 加這行
+
   console.log("載入檔案:", url);
 
-  const res = await fetch(url);
+  const res = await fetch(proxy + url);  // ✅ 改這行
   if (!res.ok) {
     alert("無法載入檔案：" + fileName);
     return;
@@ -281,7 +283,6 @@ async function loadTyphoon(fileName) {
     };
   });
 
-  // 清除舊資料
   if (marker) map.removeLayer(marker);
   if (polyline) map.removeLayer(polyline);
 
@@ -293,6 +294,7 @@ async function loadTyphoon(fileName) {
   slider.value = 0;
   updateMap(0);
 }
+
 
 // 🌀 更新地圖與資訊
 function updateMap(i) {
@@ -322,5 +324,6 @@ select.addEventListener("change", () => loadTyphoon(select.value));
 // 頁面載入時啟動
 window.onload = setupSelect;
 </script>
+
 
 
