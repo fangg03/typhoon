@@ -257,21 +257,17 @@ function setupSelect() {
 // 🌀 從 GitHub raw 讀取檔案內容
 async function loadTyphoon(fileName) {
   const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${folder}/${fileName}`;
-  const proxy = "https://cors.isomorphic-git.org/"; // ✅ 加這行
+  const proxy = "https://cors.isomorphic-git.org/";
 
   console.log("載入檔案:", url);
-
-  const res = await fetch(proxy + url);  // ✅ 改這行
-  if (!res.ok) {
-    alert("無法載入檔案：" + fileName);
-    return;
-  }
-
+  const res = await fetch(proxy + url);
   const text = await res.text();
-  const lines = text.split("\n").filter(l => l.trim() !== "");
-  typhoonData = lines.slice(1).map(line => {
-    const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname, report] =
-      line.trim().split(/\s+/);
+
+  const lines = text.split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("#"));
+  typhoonData = lines.map(line => {
+    const parts = line.split(/\s+/);
+    if (parts.length < 7) return null; // 忽略空行或格式錯誤的行
+    const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname] = parts;
     return {
       time: `${date} ${time}`,
       lat: parseFloat(lat),
@@ -279,9 +275,9 @@ async function loadTyphoon(fileName) {
       slp: parseInt(slp),
       size1: parseInt(size1 || 50),
       vmax1: parseInt(vmax1 || 10),
-      tyname
+      tyname: tyname || "未知"
     };
-  });
+  }).filter(Boolean);
 
   if (marker) map.removeLayer(marker);
   if (polyline) map.removeLayer(polyline);
@@ -296,34 +292,41 @@ async function loadTyphoon(fileName) {
 }
 
 
+
 // 🌀 更新地圖與資訊
 function updateMap(i) {
-  const p = typhoonData[i];
-  const color = `hsl(${Math.max(0, 60 - p.vmax1 * 2)}, 100%, 50%)`;
+  const point = typhoonData[i];
+  if (!point) return;
+
+  const color = `hsl(${Math.max(0, 60 - point.vmax1 * 2)}, 100%, 50%)`;
 
   if (!marker) {
-    marker = L.circle([p.lat, p.lon], {
-      radius: p.size1 * 300,
+    marker = L.circle([point.lat, point.lon], {
+      radius: point.size1 * 300,
       color,
       fillColor: color,
       fillOpacity: 0.6
     }).addTo(map);
   } else {
-    marker.setLatLng([p.lat, p.lon]);
-    marker.setRadius(p.size1 * 300);
+    marker.setLatLng([point.lat, point.lon]);
+    marker.setRadius(point.size1 * 300);
     marker.setStyle({ fillColor: color, color });
   }
 
-  info.innerText = `颱風：${p.tyname}｜時間：${p.time}｜位置：${p.lat}, ${p.lon}｜氣壓：${p.slp}｜風速：${p.vmax1} m/s`;
+  info.innerText =
+    `颱風：${point.tyname}｜時間：${point.time}｜位置：${point.lat}, ${point.lon}｜氣壓：${point.slp}｜風速：${point.vmax1} m/s`;
 }
 
+
 // 事件綁定
-slider.addEventListener("input", () => updateMap(slider.value));
+slider.addEventListener("input", () => updateMap(parseInt(slider.value)));
+
 select.addEventListener("change", () => loadTyphoon(select.value));
 
 // 頁面載入時啟動
 window.onload = setupSelect;
 </script>
+
 
 
 
