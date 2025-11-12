@@ -263,24 +263,43 @@ async function loadTyphoon(fileName) {
   const res = await fetch(proxy + url);
   const text = await res.text();
 
-  const lines = text.split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("#"));
-typhoonData = lines.slice(1).map(line => {
-  const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname, report] =
-    line.trim().split(/\s+/);
-  return {
-    time: `${date} ${time}`,
-    lat: parseFloat(lat),
-    lon: parseFloat(lon),
-    slp: parseInt(slp),
-    size1: parseInt(size1 || 50),
-    vmax1: parseInt(vmax1 || 10),
-    tyname
-  };
-});
+  const lines = text
+    .split("\n")
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith("#") && !l.includes("year")); // 去掉標題行
 
+  typhoonData = lines.map(line => {
+    const parts = line.split(/\s+/);
 
+    // 防呆：只取前 13 欄，避免結尾有亂碼
+    const [
+      year, no, date, time, slp, lat, lon,
+      size1, size2, vmax1, vmax2, tyname, report
+    ] = parts.slice(0, 13);
+
+    // 將字串轉數值（若轉不出來給 null）
+    const latVal = parseFloat(lat);
+    const lonVal = parseFloat(lon);
+    const slpVal = parseInt(slp);
+    const vmaxVal = parseInt(vmax1);
+
+    if (isNaN(latVal) || isNaN(lonVal)) {
+      console.warn("⚠️ 跳過無效行：", line);
+      return null;
+    }
+
+    return {
+      time: `${date} ${time}`,
+      lat: latVal,
+      lon: lonVal,
+      slp: slpVal,
+      size1: parseInt(size1 || 50),
+      vmax1: vmaxVal || 10,
+      tyname: tyname || "未知"
+    };
   }).filter(Boolean);
 
+  // 清除舊圖層
   if (marker) map.removeLayer(marker);
   if (polyline) map.removeLayer(polyline);
 
@@ -292,6 +311,7 @@ typhoonData = lines.slice(1).map(line => {
   slider.value = 0;
   updateMap(0);
 }
+
 
 
 
@@ -328,6 +348,7 @@ select.addEventListener("change", () => loadTyphoon(select.value));
 // 頁面載入時啟動
 window.onload = setupSelect;
 </script>
+
 
 
 
