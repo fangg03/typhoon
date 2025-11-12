@@ -207,77 +207,105 @@
 
   <!-- JS 功能 -->
   <script>
-    const map = L.map('map').setView([23.5, 121], 7);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
+const owner = "fangg03";   // 你的 GitHub 帳號
+const repo = "typhoon";    // 專案名稱
+const branch = "typhoon";  // 分支名稱
+const folder = "txt";      // 存放颱風 txt 檔案的資料夾
+
+const select = document.getElementById("fileSelect");
+const slider = document.getElementById("slider");
+const info = document.getElementById("info");
+
+// Leaflet 地圖初始化
+const map = L.map("map").setView([23.5, 121], 7);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);
+
+let marker = null;
+let polyline = null;
+let typhoonData = [];
+
+// 🌀 從 GitHub API 抓取 txt 檔案列表
+async function loadTxtList() {
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${folder}?ref=${branch}`;
+  const res = await fetch(url);
+  const files = await res.json();
+
+  files
+    .filter(f => f.name.endsWith(".txt"))
+    .forEach(f => {
+      const opt = document.createElement("option");
+      opt.value = f.download_url;
+      opt.textContent = f.name.replace(".txt", ""); // 顯示名稱
+      select.appendChild(opt);
+    });
+
+  // 預設載入第一個颱風
+  if (select.options.length > 0) {
+    loadTyphoon(select.options[0].value);
+  }
+}
+
+// 🌀 載入單一颱風 txt 並繪圖
+async function loadTyphoon(url) {
+  const text = await (await fetch(url)).text();
+  const lines = text.split("\n").filter(l => l.trim() !== "");
+  typhoonData = lines.slice(1).map(line => {
+    const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname, report] =
+      line.trim().split(/\s+/);
+    return {
+      time: `${date} ${time}`,
+      lat: parseFloat(lat),
+      lon: parseFloat(lon),
+      slp: parseInt(slp),
+      size1: parseInt(size1 || 50),
+      vmax1: parseInt(vmax1 || 10),
+      tyname
+    };
+  });
+
+  // 清除舊資料
+  if (marker) map.removeLayer(marker);
+  if (polyline) map.removeLayer(polyline);
+
+  const path = typhoonData.map(p => [p.lat, p.lon]);
+  polyline = L.polyline(path, { color: "yellow", weight: 3 }).addTo(map);
+  map.fitBounds(polyline.getBounds());
+
+  slider.max = typhoonData.length - 1;
+  slider.value = 0;
+  updateMap(0);
+}
+
+// 🌀 更新地圖位置與資訊
+function updateMap(i) {
+  const p = typhoonData[i];
+  const color = `hsl(${Math.max(0, 60 - p.vmax1 * 2)}, 100%, 50%)`;
+
+  if (!marker) {
+    marker = L.circle([p.lat, p.lon], {
+      radius: p.size1 * 300,
+      color,
+      fillColor: color,
+      fillOpacity: 0.6
     }).addTo(map);
+  } else {
+    marker.setLatLng([p.lat, p.lon]);
+    marker.setRadius(p.size1 * 300);
+    marker.setStyle({ fillColor: color, color });
+  }
 
-    let marker = null;
-    let polyline = null;
-    let typhoonData = [];
+  info.innerText = `颱風：${p.tyname}｜時間：${p.time}｜位置：${p.lat}, ${p.lon}｜氣壓：${p.slp}｜風速：${p.vmax1} m/s`;
+}
 
-    const select = document.getElementById('fileSelect');
-    const slider = document.getElementById('slider');
-    const info = document.getElementById('info');
+// 事件綁定
+slider.addEventListener("input", () => updateMap(slider.value));
+select.addEventListener("change", () => loadTyphoon(select.value));
 
-    function loadTyphoon(file) {
-      fetch(`/txt/${file}`)
-        .then(res => res.text())
-        .then(text => {
-          const lines = text.split('\n').filter(l => l.trim() !== '');
-          typhoonData = lines.slice(1).map(line => {
-            const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname, report] =
-              line.trim().split(/\s+/);
-            return {
-              time: `${date} ${time}`,
-              lat: parseFloat(lat),
-              lon: parseFloat(lon),
-              slp: parseInt(slp),
-              size1: parseInt(size1 || 50),
-              vmax1: parseInt(vmax1 || 10),
-              tyname
-            };
-          });
+// 頁面載入完成後啟動
+window.onload = () => loadTxtList();
+</script>
 
-          // 清除舊資料
-          if (marker) map.removeLayer(marker);
-          if (polyline) map.removeLayer(polyline);
-
-          // 建立路徑線
-          const pathCoords = typhoonData.map(p => [p.lat, p.lon]);
-          polyline = L.polyline(pathCoords, { color: 'yellow', weight: 3 }).addTo(map);
-          map.fitBounds(polyline.getBounds());
-
-          // 初始化第一點
-          slider.max = typhoonData.length - 1;
-          slider.value = 0;
-          updateMap(0);
-        });
-    }
-
-    function updateMap(i) {
-      const point = typhoonData[i];
-      const color = `hsl(${Math.max(0, 60 - point.vmax1 * 2)}, 100%, 50%)`;
-
-      if (!marker) {
-        marker = L.circle([point.lat, point.lon], {
-          radius: point.size1 * 300,
-          color: color,
-          fillColor: color,
-          fillOpacity: 0.6
-        }).addTo(map);
-      } else {
-        marker.setLatLng([point.lat, point.lon]);
-        marker.setRadius(point.size1 * 300);
-        marker.setStyle({ fillColor: color, color: color });
-      }
-
-      info.innerText = `颱風：${point.tyname}｜時間：${point.time}｜位置：${point.lat}, ${point.lon}｜氣壓：${point.slp}｜風速：${point.vmax1} m/s`;
-    }
-
-    slider.addEventListener("input", () => updateMap(slider.value));
-    select.addEventListener("change", () => loadTyphoon(select.value));
-    window.onload = () => loadTyphoon(select.value);
-  </script>
 </body>
 </html>
