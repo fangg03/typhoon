@@ -263,26 +263,26 @@ async function loadTyphoon(fileName) {
   const res = await fetch(proxy + url);
   const text = await res.text();
 
+  // 切行 → 去除空白與標題
   const lines = text
     .split("\n")
     .map(l => l.trim())
-    .filter(l => l && !l.startsWith("#") && !l.includes("year")); // 去掉標題行
+    .filter(l => l && !l.startsWith("#") && !l.includes("year"));
 
+  // 解析每一行
   typhoonData = lines.map(line => {
     const parts = line.split(/\s+/);
-
-    // 防呆：只取前 13 欄，避免結尾有亂碼
     const [
       year, no, date, time, slp, lat, lon,
       size1, size2, vmax1, vmax2, tyname, report
     ] = parts.slice(0, 13);
 
-    // 將字串轉數值（若轉不出來給 null）
     const latVal = parseFloat(lat);
     const lonVal = parseFloat(lon);
     const slpVal = parseInt(slp);
     const vmaxVal = parseInt(vmax1);
 
+    // 避免 NaN 錯誤
     if (isNaN(latVal) || isNaN(lonVal)) {
       console.warn("⚠️ 跳過無效行：", line);
       return null;
@@ -297,20 +297,23 @@ async function loadTyphoon(fileName) {
       vmax1: vmaxVal || 10,
       tyname: tyname || "未知"
     };
-  }).filter(Boolean);
+  }).filter(Boolean); // 移除 null
 
-  // 清除舊圖層
+  // 清除舊資料
   if (marker) map.removeLayer(marker);
   if (polyline) map.removeLayer(polyline);
 
+  // 建立路徑線
   const path = typhoonData.map(p => [p.lat, p.lon]);
   polyline = L.polyline(path, { color: "yellow", weight: 3 }).addTo(map);
   map.fitBounds(polyline.getBounds());
 
+  // 更新滑桿
   slider.max = typhoonData.length - 1;
   slider.value = 0;
   updateMap(0);
 }
+
 
 
 
@@ -348,6 +351,7 @@ select.addEventListener("change", () => loadTyphoon(select.value));
 // 頁面載入時啟動
 window.onload = setupSelect;
 </script>
+
 
 
 
