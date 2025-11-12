@@ -267,16 +267,20 @@ async function loadTyphoon(fileName) {
   typhoonData = lines.map(line => {
     const parts = line.split(/\s+/);
     if (parts.length < 7) return null; // 忽略空行或格式錯誤的行
-    const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname] = parts;
-    return {
-      time: `${date} ${time}`,
-      lat: parseFloat(lat),
-      lon: parseFloat(lon),
-      slp: parseInt(slp),
-      size1: parseInt(size1 || 50),
-      vmax1: parseInt(vmax1 || 10),
-      tyname: tyname || "未知"
-    };
+    const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname, report] =
+      line.trim().split(/\s+/);
+
+// ⚠️ 注意這裡！原始資料是 "緯度在前、經度在後"，所以不用互換。
+return {
+  time: `${date} ${time}`,
+  lat: parseFloat(lat),   // 第6欄 緯度
+  lon: parseFloat(lon),   // 第7欄 經度
+  slp: parseInt(slp),
+  size1: parseInt(size1 || 50),
+  vmax1: parseInt(vmax1 || 10),
+  tyname
+};
+
   }).filter(Boolean);
 
   if (marker) map.removeLayer(marker);
@@ -326,6 +330,7 @@ select.addEventListener("change", () => loadTyphoon(select.value));
 // 頁面載入時啟動
 window.onload = setupSelect;
 </script>
+
 
 
 
