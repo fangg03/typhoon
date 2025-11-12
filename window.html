@@ -100,31 +100,6 @@
       margin-top: 20px;
     }
 
-    .typhoon-news {
-      margin-top: 20px;
-      padding: 15px;
-      background-color: #2a2a3d;
-      border-radius: 5px;
-    }
-    .typhoon-news h3 {
-      color: #f9e7a4;
-      margin-bottom: 10px;
-    }
-    .typhoon-news ul {
-      list-style: none;
-      padding: 0;
-    }
-    .typhoon-news li {
-      margin-bottom: 10px;
-    }
-    .typhoon-news a {
-      color: #cdd9e5;
-      text-decoration: none;
-    }
-    .typhoon-news a:hover {
-      color: #e9c46a;
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -132,7 +107,7 @@
   </style>
 </head>
 <body>
-  <!-- 側邊欄 -->
+
   <div class="sidebar">
     <h2>颱風相關資源</h2>
     <a href="https://rdc28.cwa.gov.tw/TDB/public/basic_query/" target="_blank">中央氣象局</a>
@@ -144,7 +119,6 @@
     </div>
   </div>
 
-  <!-- 主內容 -->
   <div class="main-content">
     <h1>歡迎來到旅遊安全推薦</h1>
     <div class="intro">
@@ -166,58 +140,27 @@
       <a href="https://rdc28.cwa.gov.tw/TDB/" target="_blank" class="button">前往氣象資料庫</a>
     </div>
 
-    <!-- 互動式颱風路徑圖 -->
     <div class="typhoon-frame">
       <h2>互動式颱風路徑圖</h2>
       <p>選擇颱風資料檔案後使用滑桿查看路徑。</p>
       <label for="fileSelect">選擇颱風檔案：</label>
-      <select id="fileSelect">
-        <option value="202305DOKSURI.txt">2023 杜蘇芮 DOKSURI</option>
-        <option value="202302MAWAR.txt">2023 瑪娃 MAWAR</option>
-        <option value="202311HAIKUI.txt">2023 海葵 HAIKUI</option>
-        <option value="202314KOINU.txt">2023 小犬 KOINU</option>
-        <option value="202309SAOLA.txt">2023 蘇拉 SAOLA</option>
-        <option value="202306KHANUN.txt">2023 卡努 KHANUN</option>
-        <option value="202418KRATHON.txt">2024 克拉松 KRATHON</option>
-        <option value="202421KONG-REY.txt">2024 康妮 KONG-REY</option>
-        <option value="202403GAEMI.txt">2024 蓮花 GAEMI</option>
-        <option value="202425USAGI.txt">2024 兔 USAGI</option>
-        <option value="202518RAGASA.txt">2025 拉加薩 RAGASA</option>
-      </select>
-
+      <select id="fileSelect"></select>
       <div id="map"></div>
       <input type="range" id="slider" min="0" max="0" value="0" style="width:100%;margin-top:10px;">
       <p id="info" style="text-align:center;font-size:16px;margin-top:10px;"></p>
     </div>
-
-    <!-- 最新颱風新聞 -->
-    <div class="typhoon-news">
-      <h3>最新颱風新聞</h3>
-      <ul>
-        <li><a href="https://tw.news.yahoo.com/topic/typhoon/" target="_blank">Yahoo 新聞：颱風最新動態與預測</a></li>
-        <li><a href="https://www.cna.com.tw/tag/typhoon/" target="_blank">中央社：颱風路徑與影響分析</a></li>
-        <li><a href="https://www.storm.mg/tag/颱風" target="_blank">風傳媒：颱風相關報導</a></li>
-      </ul>
-    </div>
-
-    <div style="text-align:center; margin-top:20px;">
-      <a href="title.html" class="button" style="background:#276c75;">⬅返回主頁</a>
-    </div>
   </div>
 
-  <!-- JS 功能 -->
- <!-- JS 功能 -->
-<script>
-const owner = "fangg03";      // 你的 GitHub 帳號
-const repo = "typhoon";       // 專案名稱
-const branch = "typhoon";     // 分支名稱
-const folder = "txt";         // 存放颱風 txt 檔案的資料夾
+  <script>
+const owner = "fangg03";
+const repo = "typhoon";
+const branch = "typhoon";
+const folder = "txt";
 
 const select = document.getElementById("fileSelect");
 const slider = document.getElementById("slider");
 const info = document.getElementById("info");
 
-// Leaflet 地圖初始化
 const map = L.map("map").setView([23.5, 121], 7);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors"
@@ -227,22 +170,13 @@ let marker = null;
 let polyline = null;
 let typhoonData = [];
 
-// 🌀 手動列出 txt 檔案
 const typhoonFiles = [
-  "202302MAWAR.txt",
-  "202305DOKSURI.txt",
-  "202306KHANUN.txt",
-  "202309SAOLA.txt",
-  "202311HAIKUI.txt",
-  "202314KOINU.txt",
-  "202403GAEMI.txt",
-  "202418KRATHON.txt",
-  "202421KONG-REY.txt",
-  "202425USAGI.txt",
-  "202518RAGASA.txt"
+  "202302MAWAR.txt", "202305DOKSURI.txt", "202306KHANUN.txt",
+  "202309SAOLA.txt", "202311HAIKUI.txt", "202314KOINU.txt",
+  "202403GAEMI.txt", "202418KRATHON.txt", "202421KONG-REY.txt",
+  "202425USAGI.txt", "202518RAGASA.txt"
 ];
 
-// 建立下拉選單
 function setupSelect() {
   select.innerHTML = "";
   typhoonFiles.forEach(f => {
@@ -254,105 +188,65 @@ function setupSelect() {
   loadTyphoon(select.value);
 }
 
-// 🌀 從 GitHub raw 讀取檔案內容
 async function loadTyphoon(fileName) {
   const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${folder}/${fileName}`;
   const proxy = "https://cors.isomorphic-git.org/";
-
   console.log("載入檔案:", url);
+
   const res = await fetch(proxy + url);
   const text = await res.text();
 
-  // 分行，移除標題列與空白
-  const lines = text
-    .split("\n")
-    .map(l => l.trim())
-    .filter(l => l && !l.startsWith("#") && !l.includes("year"));
-
-  // 解析每一行
+  const lines = text.split("\n").map(l => l.trim()).filter(l => l && !l.includes("year"));
   typhoonData = lines.map(line => {
     const parts = line.split(/\s+/);
-    const [
-      year, no, date, time, slp, lat, lon,
-      size1, size2, vmax1, vmax2, tyname, report
-    ] = parts.slice(0, 13);
-
+    if (parts.length < 7) return null;
+    const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname] = parts;
     const latVal = parseFloat(lat);
     const lonVal = parseFloat(lon);
-    const slpVal = parseInt(slp);
-    const vmaxVal = parseInt(vmax1);
-
-    if (isNaN(latVal) || isNaN(lonVal)) {
-      console.warn("⚠️ 跳過無效行：", line);
-      return null;
-    }
-
+    if (isNaN(latVal) || isNaN(lonVal)) return null;
     return {
       time: `${date} ${time}`,
-      lat: latVal,
-      lon: lonVal,
-      slp: slpVal,
+      lat: latVal, lon: lonVal,
+      slp: parseInt(slp),
       size1: parseInt(size1 || 50),
-      vmax1: vmaxVal || 10,
+      vmax1: parseInt(vmax1 || 10),
       tyname: tyname || "未知"
     };
   }).filter(Boolean);
 
-  // 清除舊資料
   if (marker) map.removeLayer(marker);
   if (polyline) map.removeLayer(polyline);
 
-  // 畫路徑線
-  const path = typhoonData.map(p => [p.lat, p.lon]);
-  if (path.length > 1) {
+  if (typhoonData.length > 0) {
+    const path = typhoonData.map(p => [p.lat, p.lon]);
     polyline = L.polyline(path, { color: "yellow", weight: 3 }).addTo(map);
     map.fitBounds(polyline.getBounds());
+    slider.max = typhoonData.length - 1;
+    slider.value = 0;
+    updateMap(0);
   }
-
-  // 初始化滑桿
-  slider.max = typhoonData.length - 1;
-  slider.value = 0;
-  updateMap(0);
 }
 
-// 🌀 更新地圖與資訊
 function updateMap(i) {
-  const point = typhoonData[i];
-  if (!point) return;
-
-  const color = `hsl(${Math.max(0, 60 - point.vmax1 * 2)}, 100%, 50%)`;
-
+  const p = typhoonData[i];
+  if (!p) return;
+  const color = `hsl(${Math.max(0, 60 - p.vmax1 * 2)}, 100%, 50%)`;
   if (!marker) {
-    marker = L.circle([point.lat, point.lon], {
-      radius: point.size1 * 300,
-      color,
-      fillColor: color,
-      fillOpacity: 0.6
+    marker = L.circle([p.lat, p.lon], {
+      radius: p.size1 * 300,
+      color, fillColor: color, fillOpacity: 0.6
     }).addTo(map);
   } else {
-    marker.setLatLng([point.lat, point.lon]);
-    marker.setRadius(point.size1 * 300);
+    marker.setLatLng([p.lat, p.lon]);
+    marker.setRadius(p.size1 * 300);
     marker.setStyle({ fillColor: color, color });
   }
-
-  info.innerText =
-    `颱風：${point.tyname}｜時間：${point.time}｜位置：${point.lat}, ${point.lon}｜氣壓：${point.slp}｜風速：${point.vmax1} m/s`;
+  info.innerText = `颱風：${p.tyname}｜時間：${p.time}｜位置：${p.lat}, ${p.lon}｜氣壓：${p.slp}｜風速：${p.vmax1} m/s`;
 }
 
-// 事件綁定
 slider.addEventListener("input", () => updateMap(parseInt(slider.value)));
 select.addEventListener("change", () => loadTyphoon(select.value));
-
-// 頁面載入時啟動
 window.onload = setupSelect;
-</script>
-
-
-
-
-
-
-
-
-
-
+  </script>
+</body>
+</html>
