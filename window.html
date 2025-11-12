@@ -49,6 +49,7 @@
       text-align: center;
       font-size: 16px;
     }
+
     .main-content {
       margin-left: 240px;
       padding: 30px;
@@ -57,6 +58,7 @@
       animation: fadeIn 1s ease-in-out forwards;
       animation-delay: 0.5s;
     }
+
     h1 {
       color: #f9e7a4;
       text-align: center;
@@ -67,6 +69,7 @@
       text-align: center;
       font-size: 18px;
     }
+
     .button {
       display: inline-block;
       padding: 16px 32px;
@@ -83,17 +86,20 @@
       background-color: #21867a;
       transform: translateY(-3px);
     }
+
     .weather-frame,
     .typhoon-frame {
       max-width: 1000px;
       margin: 40px auto;
       text-align: center;
     }
+
     #map {
       height: 500px;
       border-radius: 10px;
       margin-top: 20px;
     }
+
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -102,7 +108,6 @@
 </head>
 <body>
 
-  <!-- 側邊欄 -->
   <div class="sidebar">
     <h2>颱風相關資源</h2>
     <a href="https://rdc28.cwa.gov.tw/TDB/public/basic_query/" target="_blank">中央氣象局</a>
@@ -114,7 +119,6 @@
     </div>
   </div>
 
-  <!-- 主內容 -->
   <div class="main-content">
     <h1>歡迎來到旅遊安全推薦</h1>
     <div class="intro">
@@ -130,7 +134,12 @@
       <a href="test.html" class="button">颱風波高</a>
     </div>
 
-    <!-- 互動式颱風路徑圖 -->
+    <div class="weather-frame">
+      <h2>即時氣象資訊</h2>
+      <p>查看中央氣象署的最新天氣數據，幫助您規劃安全的旅遊行程。</p>
+      <a href="https://rdc28.cwa.gov.tw/TDB/" target="_blank" class="button">前往氣象資料庫</a>
+    </div>
+
     <div class="typhoon-frame">
       <h2>互動式颱風路徑圖</h2>
       <p>選擇颱風資料檔案後使用滑桿查看路徑。</p>
@@ -157,7 +166,7 @@ let marker = null;
 let polyline = null;
 let typhoonData = [];
 
-// 🔹 手動列出 txt 檔案
+// 🌀 手動列出 txt 檔案
 const typhoonFiles = [
   "202302MAWAR.txt",
   "202305DOKSURI.txt",
@@ -172,7 +181,7 @@ const typhoonFiles = [
   "202518RAGASA.txt"
 ];
 
-// 初始化下拉選單
+// 建立下拉選單
 function setupSelect() {
   select.innerHTML = "";
   typhoonFiles.forEach(f => {
@@ -184,67 +193,61 @@ function setupSelect() {
   loadTyphoon(select.value);
 }
 
-// 🌀 從同站 /txt 夾抓資料
+// 🌀 讀取本地 txt 檔案（同資料夾層級）
 async function loadTyphoon(fileName) {
   const url = `./txt/${fileName}`;
   console.log("載入檔案:", url);
 
-  try {
-    const res = await fetch(url, { cache: "no-cache" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-
-    // 分行過濾
-    const lines = text
-      .split("\n")
-      .map(l => l.trim())
-      .filter(l => l && !l.startsWith("year"));
-
-    typhoonData = lines.map(line => {
-      const parts = line.split(/\s+/);
-      if (parts.length < 7) return null;
-
-      const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname] = parts;
-      const latVal = parseFloat(lat);
-      const lonVal = parseFloat(lon);
-      if (isNaN(latVal) || isNaN(lonVal)) return null;
-
-      return {
-        time: `${date} ${time}`,
-        lat: latVal,
-        lon: lonVal,
-        slp: parseInt(slp),
-        size1: parseInt(size1 || 50),
-        vmax1: parseInt(vmax1 || 10),
-        tyname: tyname || "未知"
-      };
-    }).filter(Boolean);
-
-    if (marker) map.removeLayer(marker);
-    if (polyline) map.removeLayer(polyline);
-
-    const path = typhoonData.map(p => [p.lat, p.lon]);
-    if (path.length > 1) {
-      polyline = L.polyline(path, { color: "yellow", weight: 3 }).addTo(map);
-      map.fitBounds(polyline.getBounds());
-    }
-
-    slider.max = typhoonData.length - 1;
-    slider.value = 0;
-    updateMap(0);
-
-  } catch (err) {
-    console.error("❌ 無法載入檔案:", err);
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error("❌ 無法載入檔案:", res.status, url);
+    info.innerText = "⚠️ 無法載入颱風資料，請確認 txt 是否存在。";
+    return;
   }
+
+  const text = await res.text();
+  const lines = text
+    .split("\n")
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith("#") && !l.includes("year"));
+
+  typhoonData = lines.map(line => {
+    const parts = line.split(/\s+/);
+    if (parts.length < 7) return null;
+    const [year, no, date, time, slp, lat, lon, size1, size2, vmax1, vmax2, tyname, report] = parts;
+    const latVal = parseFloat(lat);
+    const lonVal = parseFloat(lon);
+    if (isNaN(latVal) || isNaN(lonVal)) return null;
+    return {
+      time: `${date} ${time}`,
+      lat: latVal,
+      lon: lonVal,
+      slp: parseInt(slp),
+      size1: parseInt(size1 || 50),
+      vmax1: parseInt(vmax1 || 10),
+      tyname: tyname || "未知"
+    };
+  }).filter(Boolean);
+
+  if (marker) map.removeLayer(marker);
+  if (polyline) map.removeLayer(polyline);
+
+  const path = typhoonData.map(p => [p.lat, p.lon]);
+  if (path.length > 1) {
+    polyline = L.polyline(path, { color: "yellow", weight: 3 }).addTo(map);
+    map.fitBounds(polyline.getBounds());
+  }
+
+  slider.max = typhoonData.length - 1;
+  slider.value = 0;
+  updateMap(0);
 }
 
-// 🌀 更新地圖
+// 🌀 更新地圖與資訊
 function updateMap(i) {
   const point = typhoonData[i];
   if (!point) return;
-
   const color = `hsl(${Math.max(0, 60 - point.vmax1 * 2)}, 100%, 50%)`;
-
   if (!marker) {
     marker = L.circle([point.lat, point.lon], {
       radius: point.size1 * 300,
@@ -257,14 +260,14 @@ function updateMap(i) {
     marker.setRadius(point.size1 * 300);
     marker.setStyle({ fillColor: color, color });
   }
-
   info.innerText = `颱風：${point.tyname}｜時間：${point.time}｜位置：${point.lat}, ${point.lon}｜氣壓：${point.slp}｜風速：${point.vmax1} m/s`;
 }
 
+// 綁定事件
 slider.addEventListener("input", () => updateMap(parseInt(slider.value)));
 select.addEventListener("change", () => loadTyphoon(select.value));
 
-// 啟動
+// 初始化
 window.onload = setupSelect;
 </script>
 
