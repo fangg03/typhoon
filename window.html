@@ -227,7 +227,7 @@ let marker = null;
 let polyline = null;
 let typhoonData = [];
 
-// 🌀 手動列出 txt 檔案（直接從 GitHub raw 抓）
+// 🌀 手動列出 txt 檔案
 const typhoonFiles = [
   "202302MAWAR.txt",
   "202305DOKSURI.txt",
@@ -263,7 +263,7 @@ async function loadTyphoon(fileName) {
   const res = await fetch(proxy + url);
   const text = await res.text();
 
-  // 切行 → 去除空白與標題
+  // 分行，移除標題列與空白
   const lines = text
     .split("\n")
     .map(l => l.trim())
@@ -282,7 +282,6 @@ async function loadTyphoon(fileName) {
     const slpVal = parseInt(slp);
     const vmaxVal = parseInt(vmax1);
 
-    // 避免 NaN 錯誤
     if (isNaN(latVal) || isNaN(lonVal)) {
       console.warn("⚠️ 跳過無效行：", line);
       return null;
@@ -297,26 +296,24 @@ async function loadTyphoon(fileName) {
       vmax1: vmaxVal || 10,
       tyname: tyname || "未知"
     };
-  }).filter(Boolean); // 移除 null
+  }).filter(Boolean);
 
   // 清除舊資料
   if (marker) map.removeLayer(marker);
   if (polyline) map.removeLayer(polyline);
 
-  // 建立路徑線
+  // 畫路徑線
   const path = typhoonData.map(p => [p.lat, p.lon]);
-  polyline = L.polyline(path, { color: "yellow", weight: 3 }).addTo(map);
-  map.fitBounds(polyline.getBounds());
+  if (path.length > 1) {
+    polyline = L.polyline(path, { color: "yellow", weight: 3 }).addTo(map);
+    map.fitBounds(polyline.getBounds());
+  }
 
-  // 更新滑桿
+  // 初始化滑桿
   slider.max = typhoonData.length - 1;
   slider.value = 0;
   updateMap(0);
 }
-
-
-
-
 
 // 🌀 更新地圖與資訊
 function updateMap(i) {
@@ -342,15 +339,15 @@ function updateMap(i) {
     `颱風：${point.tyname}｜時間：${point.time}｜位置：${point.lat}, ${point.lon}｜氣壓：${point.slp}｜風速：${point.vmax1} m/s`;
 }
 
-
 // 事件綁定
 slider.addEventListener("input", () => updateMap(parseInt(slider.value)));
-
 select.addEventListener("change", () => loadTyphoon(select.value));
 
 // 頁面載入時啟動
 window.onload = setupSelect;
 </script>
+
+
 
 
 
