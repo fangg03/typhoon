@@ -256,21 +256,22 @@ async function loadTyphoon(fileName) {
 function updateMap(i) {
   const point = typhoonData[i];
   if (!point) return;
+
   const color = `hsl(${Math.max(0, 60 - point.vmax1 * 2)}, 100%, 50%)`;
-  if (!marker) {
-    marker = L.circle([point.lat, point.lon], {
-      radius: point.size1 * 300,
-      color,
-      fillColor: color,
-      fillOpacity: 0.6
-    }).addTo(map);
-  } else {
-    marker.setLatLng([point.lat, point.lon]);
-    marker.setRadius(point.size1 * 300);
-    marker.setStyle({ fillColor: color, color });
-  }
+
+  // 每次更新前先刪掉舊的 marker（確保不重疊）
+  if (marker) map.removeLayer(marker);
+
+  marker = L.circle([point.lat, point.lon], {
+    radius: point.size1 * 1000,  // 改大一點比較明顯
+    color,
+    fillColor: color,
+    fillOpacity: 0.6
+  }).addTo(map);
+
   info.innerText = `颱風：${point.tyname}｜時間：${point.time}｜位置：${point.lat}, ${point.lon}｜氣壓：${point.slp}｜風速：${point.vmax1} m/s`;
 }
+
 
 // 綁定事件
 slider.addEventListener("input", () => updateMap(parseInt(slider.value)));
@@ -283,5 +284,6 @@ window.onload = setupSelect;
 
 </body>
 </html>
+
 
 
