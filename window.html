@@ -226,8 +226,9 @@ async function loadTyphoon(fileName) {
       };
     }).filter(Boolean);
 
-    if (marker) map.removeLayer(marker);
-    if (polyline) map.removeLayer(polyline);
+    // 🔧 關鍵修正：確保清空上一筆資料的圖層
+    if (marker) { map.removeLayer(marker); marker = null; }
+    if (polyline) { map.removeLayer(polyline); polyline = null; }
 
     const path = typhoonData.map(p => [p.lat, p.lon]);
     if (path.length > 1) {
@@ -235,15 +236,21 @@ async function loadTyphoon(fileName) {
       map.fitBounds(polyline.getBounds());
     }
 
-    slider.max = typhoonData.length - 1;
-    slider.value = 0;
-    updateMap(0);
+    // 🔧 安全設定 slider 範圍
+    if (typhoonData.length > 0) {
+      slider.max = typhoonData.length - 1;
+      slider.value = 0;
+      updateMap(0);
+    } else {
+      info.innerText = "⚠️ 該颱風檔案沒有可解析的座標資料。";
+    }
 
   } catch (err) {
     console.error(err);
     info.innerText = "⚠️ 無法載入資料，請確認 txt 是否存在於 /txt 資料夾。";
   }
 }
+
 
 // 🌀 更新地圖與資訊
 function updateMap(i) {
@@ -276,4 +283,5 @@ window.onload = setupSelect;
 
 </body>
 </html>
+
 
